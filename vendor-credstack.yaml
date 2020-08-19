@@ -1,0 +1,63 @@
+Parameters:
+  S3StackName:
+    Type: String
+    Default: vendor-s3stack 
+    Description: Name of the S3 stack created 
+Resources:
+  VendorIAMUserforS3:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: vendoriamuser
+      Policies:
+      - PolicyName: VendorIAMUserPolicy
+        PolicyDocument:
+          Statement:
+            - Sid: VendorIAMUserforS3 
+              Effect: Allow
+              Action: 'S3:*'
+              Resource: 
+                - !Join
+                  - ''
+                  - - 'arn:aws:s3:::'
+                    - Fn::ImportValue:
+                        !Sub "${S3StackName}:VendorS3Bucket"
+                - !Join
+                  - ''
+                  - - 'arn:aws:s3:::'
+                    - Fn::ImportValue:
+                        !Sub "${S3StackName}:VendorS3Bucket"
+                    - '/*'
+  S3UserKeys:
+    DependsOn: VendorIAMUserforS3
+    Type: AWS::IAM::AccessKey
+    Properties:
+      UserName:
+        Ref: VendorIAMUserforS3
+  VendorS3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket:
+        Fn::ImportValue:
+          !Sub "${S3StackName}:VendorS3Bucket"
+      PolicyDocument:
+        Statement:
+          - Sid: "Deny any S3 action for IAM user not recognized"
+            Action: 
+              - "s3:*"
+            Effect: "Deny"
+            Resource:
+              Fn::Join:
+                - ''
+                - - 'arn:aws:s3:::'
+                  - Fn::ImportValue:
+                      !Sub "${S3StackName}:VendorS3Bucket"
+                  - '/*'
+            NotPrincipal:
+              AWS: !GetAtt VendorIAMUserforS3.Arn
+Outputs:
+  MyAccessKeyId:
+    Description: TheAccessKey
+    Value: !Ref S3UserKeys
+  MySecretKey:
+    Description: TheSecret
+    Value: !GetAtt S3UserKeys.SecretAccessKey
