@@ -1,2 +1,2 @@
 # vendortool
-vendor helper
+vendor template helper
