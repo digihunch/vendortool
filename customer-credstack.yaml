@@ -1,7 +1,7 @@
 Parameters:
   S3StackName:
     Type: String
-    Default: vendor-s3stack 
+    Default: customer-s3stack 
     Description: Name of the S3 stack created 
 Resources:
   VendorIAMUserforS3:
